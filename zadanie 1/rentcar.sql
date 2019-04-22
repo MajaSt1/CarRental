@@ -1,28 +1,55 @@
-USE rent_car;
+-- -- -------------------------------------------------------------------------------
+-- -- Zadanie 1
+-- -- -------------------------------------------------------------------------------
+
+-- -- -------------------------------------------------------------------------------
+-- Section: setting sql_mode
+-- -- -------------------------------------------------------------------------------
+-- Key settings:
+-- ONLY_FULL_GROUP_BY = gwarantuje swiadome deklarowanie sekcji GROUP BY
+-- STRICT_ALL_TABLES = gwarantuje, że wstawicie odpowiednie typy/długości danych w odpowiednie miejsca
+-- 	DB automatycznie nie będzie konwertował typów ani nie ucinał długości znaków.
+-- 	Czyli nie bedzie mozliwe wstawienie stringa '10/24' do pola INT(10) ani stringa
+-- 	o dlugosci 100 znakow w pole VARCHAR(10). Przy wlaczonym STRICT_ALL_TABLES pojawi sie Error
+-- 	a nie Warning.
+-- SQL Modes: https://dev.mysql.com/doc/refman/8.0/en/sql-mode.html
+-- -- -------------------------------------------------------------------------------
 
 SET sql_mode='ONLY_FULL_GROUP_BY,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
-DROP DATABASE IF EXISTS rent_car;
+-- -- -------------------------------------------------------------------------------
+-- Section: DROP DATABASE lub DROP TABLEs
+-- -- -------------------------------------------------------------------------------
+-- Tutaj usuwamy całą bazę przed jej zadeklarowaniem. To pozwoli Wam łatwo resetować
+-- bazę danych w trakcie testów.
+-- -- -------------------------------------------------------------------------------
 
-CREATE DATABASE rent_car DEFAULT CHARACTER SET UTF8MB4 ;
+DROP DATABASE IF EXISTS jsk_db_list;
 
-USE rent_car;
+-- -- -------------------------------------------------------------------------------
+-- Section: CREATE DATABASE/SCHEMA
+-- -- -------------------------------------------------------------------------------
+CREATE DATABASE jsk_db_list DEFAULT CHARACTER SET UTF8MB4 ;
 
--- drop table if it already exists
--- DROP TABLE IF EXISTS jsk_db.movie;
--- DROP TABLE IF EXISTS jsk_db.carrier;
--- DROP TABLE IF EXISTS jsk_db.movie2actor;
--- DROP TABLE IF EXISTS jsk_db.crew_member;
+-- -- -------------------------------------------------------------------------------
+-- Section: USE
+-- -- -------------------------------------------------------------------------------
+USE jsk_db_list;
 
--- DDL
-CREATE TABLE rent_car.adress (
+-- -- -------------------------------------------------------------------------------
+-- Section: CREATE
+-- -- -------------------------------------------------------------------------------
+-- Tutaj tworzymy nasze tabele bez kluczy obcych. Definiujemy tylko i wyłącznie tabele.
+-- W sekcji niżej należy pododawać relacje między tabelami. To daje większą przejrzystość.
+-- Pola, do ktorych dodamy klucze w sekcji 'ALTER TABLE', powinny znalezc sie juz w naszych DDL
+-- -- -------------------------------------------------------------------------------
+CREATE TABLE adress (
 id INT NOT NULL AUTO_INCREMENT,
 
 street VARCHAR(40) NOT NULL,
-flat_number int(10) NOT NULL,
-venue_number int(10) NOT NULL, 
 postcode VARCHAR (6) NOT NULL,
-country VARCHAR (40) NOT NULL, 
+country VARCHAR (40) NOT NULL,
+city VARCHAR(40) NOT NULL, 
 email VARCHAR (100) NOT NULL,
 phone_number VARCHAR (12) NOT NULL,
 
@@ -31,7 +58,7 @@ PRIMARY KEY (id)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
 
-CREATE TABLE rent_car.establishment (
+CREATE TABLE establishment (
 id INT NOT NULL AUTO_INCREMENT,
 adress_id INT NOT NULL,
 
@@ -41,7 +68,7 @@ PRIMARY KEY (id)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
 
-CREATE TABLE rent_car.position (
+CREATE TABLE position (
 id INT NOT NULL AUTO_INCREMENT,
 
 positon_name ENUM ('seller', 'supervisor', 'accountant') NOT NULL COMMENT 'You must choose one of the given position',
@@ -52,7 +79,7 @@ PRIMARY KEY (id)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
 
-CREATE TABLE rent_car.customer(
+CREATE TABLE customer(
 id INT NOT NULL AUTO_INCREMENT,
 
 name VARCHAR (40) NOT NULL,
@@ -67,7 +94,7 @@ PRIMARY KEY (id)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
 
-CREATE TABLE rent_car.employee(
+CREATE TABLE employee(
 id INT NOT NULL AUTO_INCREMENT,
 establishment_id INT NOT NULL,
 position_id INT NOT NULL,
@@ -83,8 +110,8 @@ PRIMARY KEY (id)
 
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
--- enum ?
-CREATE TABLE rent_car.car(
+
+CREATE TABLE car(
 id INT NOT NULL AUTO_INCREMENT,
 mileage VARCHAR (40) NOT NULL,
 model VARCHAR (40) NOT NULL,
@@ -100,7 +127,7 @@ PRIMARY KEY (id)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
 
-CREATE TABLE rent_car.rental(
+CREATE TABLE rental(
 id INT NOT NULL AUTO_INCREMENT,
 start_rental_establishment_id INT NOT NULL,
 regiving_establishment_id INT NOT NULL,
@@ -117,35 +144,40 @@ UNIQUE INDEX uq_rental_start_rental_date (start_rental_date ASC)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
 
-CREATE TABLE rent_car.charge(
+CREATE TABLE charge(
 id INT NOT NULL AUTO_INCREMENT,
 employee_id INT NOT NULL,
 car_id INT NOT NULL,
 
 PRIMARY KEY (id)
 );
--- Section: ALTER TABLE
 
+-- -- -------------------------------------------------------------------------------
+-- Section: ALTER TABLE
+-- -- -------------------------------------------------------------------------------
+-- Tutaj możesz dodać klucze obce (ALE nie pola - te powinny znalexc sie w sekcji 'CREATE').
+-- Jesli potrzebujesz - mozesz dodac tutaj dodatkowe zmiany w tabelach
+-- -- -------------------------------------------------------------------------------
 ALTER TABLE establishment 
-            ADD CONSTRAINT fk_establishment_adress 
-			    FOREIGN KEY (adress_id) 
-                REFERENCES  adress(id)
-                ON DELETE CASCADE;
+	ADD CONSTRAINT fk_establishment_adress 
+			FOREIGN KEY (adress_id) 
+			REFERENCES  adress(id)
+			ON DELETE CASCADE;
                 
 ALTER TABLE customer 
-		ADD CONSTRAINT fk_customer_adress 
-           FOREIGN KEY (adress_id)
-           REFERENCES adress(id)
-           ON DELETE CASCADE;
+	ADD CONSTRAINT fk_customer_adress 
+		  FOREIGN KEY (adress_id)
+		  REFERENCES adress(id)
+		  ON DELETE CASCADE;
            
 ALTER TABLE employee
-		ADD CONSTRAINT fk_employee_establishment 
+	ADD CONSTRAINT fk_employee_establishment 
         FOREIGN KEY (establishment_id) 
         REFERENCES establishment (id)
         ON DELETE CASCADE,
 ADD CONSTRAINT fk_employee_position 
         FOREIGN KEY (position_id) 
-        REFERENCES rent_car.position (id)
+        REFERENCES position (id)
         ON DELETE CASCADE;
         
 ALTER TABLE rental 
@@ -173,5 +205,9 @@ ALTER TABLE charge
        ON DELETE CASCADE,
 ADD CONSTRAINT fk_charge_position 
 	   FOREIGN KEY (car_id) 
-       REFERENCES rent_car.position(id)
+       REFERENCES jsk_db_list.position(id)
        ON DELETE CASCADE;
+
+
+
+
