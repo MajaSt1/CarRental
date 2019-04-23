@@ -150,7 +150,10 @@ employee_id INT NOT NULL,
 car_id INT NOT NULL,
 
 PRIMARY KEY (id)
-);
+)
+
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4;
 
 -- -- -------------------------------------------------------------------------------
 -- Section: ALTER TABLE
@@ -189,24 +192,24 @@ ADD CONSTRAINT fk_rental_establishment_start
 	   FOREIGN KEY (start_rental_establishment_id)
        REFERENCES establishment(id)
        ON DELETE CASCADE,
-ADD CONSTRAINT fk_charge_car
+ADD CONSTRAINT fk_rental_car
        FOREIGN KEY (car_id)
        REFERENCES car(id)
        ON DELETE CASCADE,
-ADD CONSTRAINT fk_charge_client
+ADD CONSTRAINT fk_rental_client
        FOREIGN KEY (client_id)
        REFERENCES customer(id)
        ON DELETE CASCADE;
        
 ALTER TABLE charge
-       ADD CONSTRAINT fk_charge_establishment 
+       ADD CONSTRAINT fk_charge_employee
        FOREIGN KEY (employee_id) 
-       REFERENCES establishment(id)
-       ON DELETE CASCADE,
-ADD CONSTRAINT fk_charge_position 
+       REFERENCES employee(id)
+       ON DELETE NO ACTION,
+ADD CONSTRAINT fk_charge_car
 	   FOREIGN KEY (car_id) 
-       REFERENCES jsk_db_list.position(id)
-       ON DELETE CASCADE;
+       REFERENCES car(id)
+       ON DELETE NO ACTION;
 
 
 
