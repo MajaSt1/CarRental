@@ -47,12 +47,14 @@ WHERE a.email REGEXP '^(.)[^A-Za-z].*\1$'
 AND a.email REGEXP '%[@]%';
 
 -- zadanie 7
-
- CREATE TABLE tn (c1 INT)
+-- !
+ CREATE TABLE adress (email VARCHAR(100))
 	PARTITION BY LIST(1 DIV c1) (
     PARTITION p0 VALUES IN (NULL),
     PARTITION p1 VALUES IN (1)
      );
+     
+     
      
 -- zadanie 8
 -- !!
@@ -74,7 +76,7 @@ WHERE REGEXP_LIKE(name, '^A')
 LIMIT 1;
 
 -- zadanie 11
-
+-- !
 -- zadanie 12
 SELECT model, automobile, COUNT(*) AS total_of_charge
 FROM charge
@@ -122,8 +124,8 @@ r.start_rental_date, r.regiving_date
 FROM rental r
 INNER JOIN customer ON (r.client_id = customer.id)
 INNER JOIN car ON (r.car_id= car.id)
-WHERE start_rental_date >='2005-09-22' AND 
-regiving_date <= '2018-10-23'
+WHERE start_rental_date <'2018-10-23' AND 
+regiving_date > '2005-09-22'
 HAVING automobile = 'Audi';
 
 -- zadanie 17
@@ -139,13 +141,33 @@ SELECT * FROM car
 WHERE mileage = (SELECT MAX(mileage) FROM car);
 
 -- zadanie 19 
--- znajdź klientów z największą liczbą wypożyczeń (może być więcej niż 1)
-SELECT customer.id AS customer_id, customer.surname, COUNT(rental.id) AS num
-FROM customer 
-LEFT JOIN rental ON (rental.client_id=customer.id)
-GROUP BY customer.id, customer_name
-ORDER BY customer_name DESC;
 
+SELECT customer.name , COUNT(*) maximum FROM customer 
+INNER JOIN rental ON customer.id= rental.client_id
+GROUP BY customer.id 
+ORDER BY maximum DESC 
+LIMIT 2;
 
 -- zadanie 20
+WITH different_cars AS (
+SELECT car.automobile , COUNT(*)maximum FROM car 
+INNER JOIN rental ON car.id= rental.car_id
+GROUP BY car.id 
+ORDER BY maximum DESC 
+) 
+SELECT i.id, i.name, i.surname , i.maximum
+FROM (
+SELECT c.id, c. name , c.surname , different_cars.maximum
+   SELECT DISTINCT DENSE_RANK () OVER (ORDER BY different_cars.maximum DESC) AS v_rank
+FROM customer c
+JOIN different_cars ON (different_cars.id = c.id)
+) i
+WHERE v_rank = 1;
+
 -- zadanie 21
+SELECT i.id, i.name, i.surname , i.maximum
+FROM (
+SELECT DISTINCT car.model, COUNT(*) AS maximum ,DENSE_RANK() OVER(ORDER BY i.maximum) AS most_rent_car
+FROM rental r, car
+INNER JOIN rental ON car.id= rental.car_id
+GROUP BY car.model ) i;
